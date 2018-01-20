@@ -162,7 +162,7 @@ IFS=$SAVEIFS
 
 if [ "${dryrun}" = false ]; then
         echo "Deleting unused containers..."
-        echo $container_ids | xargs --no-run-if-empty ${docker_bin} rm
+        ${docker_bin} ps -q -f status=dead -f status=exited --no-trunc | xargs --no-run-if-empty ${docker_bin} rm
         echo "done."
 
         echo "Deleting unused images..."
