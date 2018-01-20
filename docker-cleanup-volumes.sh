@@ -92,7 +92,7 @@ do
             verbose=true
         ;;
         *)
-            echo "Cleanup docker volumes: remove unused volumes."
+            echo "Cleanup docker volumes: remove unused volumes, containers and images."
             echo "Usage: ${0##*/} [--dry-run] [--verbose]"
             echo "   -n, --dry-run: dry run: display what would get removed."
             echo "   -v, --verbose: verbose output."
@@ -159,6 +159,16 @@ for container in $container_ids; do
         done
 done
 IFS=$SAVEIFS
+
+if [ "${dryrun}" = false ]; then
+        echo "Deleting unused containers..."
+        echo $container_ids | xargs --no-run-if-empty ${docker_bin} rm
+        echo "done."
+
+        echo "Deleting unused images..."
+        ${docker_bin} images -qf dangling=true | xargs --no-run-if-empty ${docker_bin} rmi
+        echo "done."
+fi
 
 delete_volumes "${volumesdir}"
 delete_volumes "${vfsdir}"
