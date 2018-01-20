@@ -1,11 +1,12 @@
 #
 #Cleanup orphaned docker volumes
 #Usage:
-#docker run -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm martin/docker-cleanup-volumes [--dry-run]
+#docker run -v $(which docker):/bin/docker -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm rlanyi/docker-cleanup-volumes [--dry-run]
 #
 FROM alpine:3.2
 
-MAINTAINER Martin van Beurden <chadoe@gmail.com>
+MAINTAINER Robert Lanyi <lanyi.robert.attila@gmail.com>
+#forked from https://github.com/chadoe/docker-cleanup-volumes
 
 ENV DOCKER_VERSION=1.4.1
 
