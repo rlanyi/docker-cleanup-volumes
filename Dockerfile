@@ -1,7 +1,7 @@
 #
 #Cleanup orphaned docker volumes
 #Usage:
-#docker run -v $(which docker):/bin/docker -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm rlanyi/docker-cleanup-volumes [--dry-run]
+#docker run -v $(which docker):/bin/docker -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm rlanyi/docker-cleanup [--dry-run]
 #
 FROM alpine:3.2
 
@@ -19,7 +19,7 @@ RUN apk add --update-cache curl bash grep && \
     apk del curl && rm -rf /var/cache/apk/*
 
 #Add the cleanup script
-COPY ./docker-cleanup-volumes.sh /usr/local/bin/
+COPY ./docker-cleanup.sh /usr/local/bin/
 
 #Define entrypoint
-ENTRYPOINT ["/usr/local/bin/docker-cleanup-volumes.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-cleanup.sh"]

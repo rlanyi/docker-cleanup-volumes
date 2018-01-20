@@ -1,5 +1,5 @@
-docker-cleanup-volumes
-======================
+docker-cleanup
+==============
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/chadoe/docker-cleanup-volumes/master/LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/martin/docker-cleanup-volumes.svg)](https://hub.docker.com/r/martin/docker-cleanup-volumes/)
@@ -11,7 +11,7 @@ Shellscript to delete orphaned docker volumes in /var/lib/docker/volumes and /va
 Docker version 1.4.1 up to 1.13.x
 
 ### Note about Docker 1.9 and up
-To delete orphaned volumes in Docker 1.9 and up you can also use the built-in `docker volume prune` commands instead of this docker-cleanup-volumes script. The built-in command also deletes any directory in /var/lib/docker/volumes that is not a volume so make sure you didn't put anything in there you want to save:  
+To delete orphaned volumes in Docker 1.9 and up you can also use the built-in `docker volume prune` commands instead of this docker-cleanup script. The built-in command also deletes any directory in /var/lib/docker/volumes that is not a volume so make sure you didn't put anything in there you want to save:  
 List:
 ```
 $ docker volume ls -qf dangling=true
@@ -32,7 +32,7 @@ $ docker volume ls -qf dangling=true | xargs -r docker volume rm
 3. When using the script for the first time or after upgrading the host Docker version, run the script with the `--dry-run` parameter first to make sure it works okay and doesn't delete any volumes that shouldn't be deleted. If you feel bold and run it without `--dry-run` anyway, make sure you did 1.
 
 ### Usage standalone script
-$ sudo ./docker-cleanup-volumes.sh [--dry-run] [--verbose]
+$ sudo ./docker-cleanup.sh [--dry-run] [--verbose]
 
 --dry-run : Use the --dry-run option to have the script print the volumes that would have been deleted without actually deleting them.  
 --verbose : Have the script output more information.  
@@ -40,16 +40,16 @@ $ sudo ./docker-cleanup-volumes.sh [--dry-run] [--verbose]
 ### Running from Docker
 Run the "latest" forward compatible Docker client version (works with host Docker 1.4.x up to 1.13.x)
 ```
-$ docker run -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm martin/docker-cleanup-volumes --dry-run
+$ docker run -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm rlanyi/docker-cleanup --dry-run
 ```
 
 If you symlinked /var/lib/docker to somewhere else make sure you tell the Docker container where it is by providing the real path or by using readlink in volume parameter.
 ```
-$ docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(readlink -f /var/lib/docker):/var/lib/docker --rm martin/docker-cleanup-volumes --dry-run
+$ docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(readlink -f /var/lib/docker):/var/lib/docker --rm rlanyi/docker-cleanup --dry-run
 ```
 
 ### Running from docker using the host docker binary
 It is also possible to use the host docker binary by mounting the host docker bin directory. This way you make sure the Docker versions are the same between host and container. For example:
 ```
-$ docker run -v $(which docker):/bin/docker -v /var/run/docker.sock:/var/run/docker.sock -v $(readlink -f /var/lib/docker):/var/lib/docker --rm martin/docker-cleanup-volumes --dry-run
+$ docker run -v $(which docker):/bin/docker -v /var/run/docker.sock:/var/run/docker.sock -v $(readlink -f /var/lib/docker):/var/lib/docker --rm rlanyi/docker-cleanup --dry-run
 ```
