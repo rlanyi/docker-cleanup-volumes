@@ -107,6 +107,25 @@ ${docker_bin} version >/dev/null
 
 container_ids=$(${docker_bin} ps -a -q --no-trunc)
 
+# Check if we're running as a docker container
+if [[ ${container_ids[@]} =~ (^|[[:space:]])"$HOSTNAME" ]]; then
+    # Get the dockerdir on the host from the volume mapped to /var/lib/docker
+    dockerdir_match=$(
+        ${docker_bin} inspect -f '{{if .Volumes}}{{ index .Volumes "/var/lib/docker" }}{{end}}' "$HOSTNAME"; \
+        ${docker_bin} inspect --format='{{range $mount := .Mounts}}{{if eq $mount.Destination "/var/lib/docker"}}{{$mount.Source}}{{end}}{{end}}' "$HOSTNAME"
+    )
+else
+    # Script is running standalone, dockerdir is the directory to use
+    dockerdir_match=${dockerdir}
+fi
+
+# These directories are used to match with docker inspect values
+volumesdir_match=${dockerdir_match}/volumes
+vfsdir_match=${dockerdir_match}/vfs/dir
+
+log_verbose "dockerdir -> ${dockerdir}"
+log_verbose "dockerdir_match -> ${dockerdir_match}"
+
 #All volumes from all containers
 SAVEIFS=$IFS
 IFS=$(echo -en "\n\b")
@@ -117,13 +136,14 @@ for container in $container_ids; do
         #add all volumes from this container to the list of volumes
         log_verbose "Inspecting container ${container}"
         for volpath in $(
-                ${docker_bin} inspect --format='{{range $key, $val := .}}{{if eq $key "Volumes"}}{{range $vol, $path := .}}{{$path}}{{"\n"}}{{end}}{{end}}{{if eq $key "Mounts"}}{{range $mount := $val}}{{$mount.Source}}{{"\n"}}{{end}}{{end}}{{end}}' ${container} \
+                ${docker_bin} inspect --format='{{range $vol, $path := .Volumes}}{{$path}}{{"\n"}}{{end}}' ${container}; \
+                ${docker_bin} inspect --format='{{range $mount := .Mounts}}{{$mount.Source}}{{"\n"}}{{end}}' ${container} \
         ); do
-                log_verbose "Processing volumepath ${volpath}"
+                log_verbose "Processing volumepath ${volpath} for container ${container}"
                 #try to get volume id from the volume path
-                vid=$(echo "${volpath}" | sed 's|.*/\(.*\)/_data$|\1|;s|.*/\([0-9a-f]\{64\}\)$|\1|')
-                # check for either a 64 character vid or then end of a volumepath containing _data:
-                if [[ "${vid}" =~ ^[0-9a-f]{64}$ || (${volpath} =~ .*/_data$ && ! "${vid}" =~ "/") ]]; then
+                vid=$(echo "${volpath}"|sed "s|${vfsdir_match}||;s|${volumesdir_match}||;s/.*\([0-9a-f]\{64\}\).*/\1/")
+                # host daemon shows original dir path - this is why _match variables are used:
+                if [[ (${volpath} == ${vfsdir_match}* || ${volpath} == ${volumesdir_match}*) && "${vid}" =~ [0-9a-f]{64} ]]; then
                         log_verbose "Found volume ${vid}"
                         allvolumes+=("${vid}")
                 else
